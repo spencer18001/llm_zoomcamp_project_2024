@@ -1,0 +1,7 @@
+streamlit
+
+semchunk
+tiktoken
+sentence_transformers
+elasticsearch
+openai
