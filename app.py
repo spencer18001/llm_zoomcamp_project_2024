@@ -11,6 +11,7 @@ import tiktoken
 from sentence_transformers import SentenceTransformer
 from elasticsearch import Elasticsearch
 from openai import OpenAI
+from db import save_conversation
 
 index_name = "story_chunks"
 
@@ -98,17 +99,31 @@ CONTEXT:
     return prompt
 
 def llm_ollama(client, prompt, model_name):
+    start_time = time.time()
     response = client.chat.completions.create(
         model=model_name,
         messages=[{"role": "user", "content": prompt}]
     )
-    return response.choices[0].message.content
+    end_time = time.time()
+    response_time = end_time - start_time
+    tokens = {
+        'prompt_tokens': response.usage.prompt_tokens,
+        'completion_tokens': response.usage.completion_tokens,
+        'total_tokens': response.usage.total_tokens
+    }
+    return response.choices[0].message.content, tokens, response_time
 
 def rag(search_func, llm_func, build_prompt_func, query, query_vec, model_name):
     search_results = search_func(query_vec)
     prompt = build_prompt_func(query, search_results)
-    answer = llm_func(prompt, model_name)
-    return answer
+    answer, tokens, response_time = llm_func(prompt, model_name)
+    return {
+        'answer': answer,
+        'response_time': response_time,
+        'prompt_tokens': tokens['prompt_tokens'],
+        'completion_tokens': tokens['completion_tokens'],
+        'total_tokens': tokens['total_tokens']
+    }
 
 def main():
     st.title("Detective Assistant")
@@ -129,16 +144,12 @@ def main():
         embedding_model = st.session_state.embedding_model
         ol_client = st.session_state.ol_client
 
-    # Session state initialization
-    if 'conversation_id' not in st.session_state:
-        st.session_state.conversation_id = str(uuid.uuid4())
-
     user_input = st.text_input("Enter your question:")
     if st.button("Ask"):
         with st.spinner('Processing...'):
             question = user_input
             v = embedding_model.encode(question)
-            answer = rag(
+            answer_data = rag(
                 search_func=functools.partial(elasticsearch_knn, es_client, 'vector'),
                 llm_func=functools.partial(llm_ollama, ol_client),
                 build_prompt_func=build_prompt,
@@ -147,7 +158,12 @@ def main():
                 model_name='phi3'
             )
             st.success("Completed!")
-            st.write(answer)
+            st.write(answer_data['answer'])
+            st.write(f"Response time: {answer_data['response_time']:.2f} seconds")
+            st.write(f"Total tokens: {answer_data['total_tokens']}")
+
+            conversation_id = str(uuid.uuid4())
+            save_conversation(conversation_id, user_input, answer_data)
 
 if __name__ == "__main__":
     main()
