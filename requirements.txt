@@ -6,3 +6,6 @@ sentence-transformers==2.7.0
 elasticsearch==8.14.0
 openai==1.35.7
 psycopg2-binary==2.9.9
+
+# todo_spencer: tqdm
+# todo_spencer: dev 的 requirement

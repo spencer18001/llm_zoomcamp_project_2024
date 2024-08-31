@@ -1,161 +1,44 @@
-import streamlit as st
-import time
-import uuid
-
-import time, json
-import requests
+import logging, uuid
 import functools
+
 from tqdm.auto import tqdm
-import semchunk
-import tiktoken
-from sentence_transformers import SentenceTransformer
-from elasticsearch import Elasticsearch
-from openai import OpenAI
-from db import save_conversation
+import streamlit as st
 
-index_name = "story_chunks"
+from proj_config import config
+import elastic_util
+import llm_util
+import db_util
 
-url_elasticsearch = 'http://localhost:9200'
+_logger = logging.getLogger(__name__)
 
-def create_elasticsearch_client():
-    while True:
-        try:
-            response = requests.get(url_elasticsearch)
-        except requests.ConnectionError:
-            time.sleep(5)
-        else:
-            break
-    client = Elasticsearch(url_elasticsearch)
-    print(json.dumps(client.info().raw, indent=4))
-    return client
-
-def elasticsearch_knn(es_client, field, vector):
-    knn = {
-        "field": field,
-        "query_vector": vector,
-        "k": 5,
-        "num_candidates": 10000
-    }
-
-    search_query = {
-        "knn": knn,
-        "_source": ["text"]
-    }
-
-    es_results = es_client.search(
-        index=index_name,
-        body=search_query
-    )
-
-    result_docs = []
-    for hit in es_results['hits']['hits']:
-        result_docs.append(hit['_source'])
-    return result_docs
-
-url_ollama = 'http://localhost:11434'
-
-def create_ollama_client(model):
-    while True:
-        try:
-            response = requests.get(url_ollama)
-        except requests.ConnectionError:
-            time.sleep(5)
-        else:
-            print(response.content.decode())
-            break
-    
-    response = requests.post(f'{url_ollama}/api/pull', json={"name": model})
-    print(response.status_code)
-    print(response)
-
-    while True:
-        response = requests.get(f'{url_ollama}/api/tags')
-        if len(response.json().get("models", [])) > 0:
-            print(json.dumps(response.json(), indent=4))
-            break
-        time.sleep(5)
-
-    api_key = "ollama"
-    base_url = f"{url_ollama}/v1/"
-    return OpenAI(api_key=api_key, base_url=base_url)
-
-def build_prompt(query, search_results):
-    prompt_template = """
-You are an expert detective analyzing the details of the story "The Adventure of the Speckled Band." Answer the QUESTION using only the relevant information provided in the CONTEXT from the story.
-
-Make sure to stay true to the facts in the CONTEXT when answering the QUESTION. Avoid adding any outside knowledge or assumptions.
-
-QUESTION: {question}
-
-CONTEXT:
-{context}
-""".strip()
-
-    context = ""
-    for doc in search_results:
-        context = context + f"text: {doc['text']}\n\n"
-
-    prompt = prompt_template.format(question=query, context=context).strip()
-    return prompt
-
-def llm_ollama(client, prompt, model_name):
-    start_time = time.time()
-    response = client.chat.completions.create(
-        model=model_name,
-        messages=[{"role": "user", "content": prompt}]
-    )
-    end_time = time.time()
-    response_time = end_time - start_time
-    tokens = {
-        'prompt_tokens': response.usage.prompt_tokens,
-        'completion_tokens': response.usage.completion_tokens,
-        'total_tokens': response.usage.total_tokens
-    }
-    return response.choices[0].message.content, tokens, response_time
-
-def rag(search_func, llm_func, build_prompt_func, query, query_vec, model_name):
-    search_results = search_func(query_vec)
-    prompt = build_prompt_func(query, search_results)
-    answer, tokens, response_time = llm_func(prompt, model_name)
-    return {
-        'answer': answer,
-        'response_time': response_time,
-        'prompt_tokens': tokens['prompt_tokens'],
-        'completion_tokens': tokens['completion_tokens'],
-        'total_tokens': tokens['total_tokens']
-    }
-
-def main():
+def app_main():
     st.title("Detective Assistant")
-    print("!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!")
+    
     if 'initialized' not in st.session_state:
         with st.spinner('Loading...'):
             print("create es_client...")
-            st.session_state.es_client = create_elasticsearch_client()
+            st.session_state.es_client = elastic_util.create_client()
             print("create embedding_model...")
-            st.session_state.embedding_model = SentenceTransformer('all-mpnet-base-v2')
-            print("create ol_client...")
-            st.session_state.ol_client = create_ollama_client('phi3')
+            st.session_state.embedding_model = llm_util.create_embedding_model()
+            print("create llm_client...")
+            st.session_state.llm_client = llm_util.create_client()
 
             st.session_state.initialized = True
             print("initialized")
     else:
         es_client = st.session_state.es_client
         embedding_model = st.session_state.embedding_model
-        ol_client = st.session_state.ol_client
+        llm_client = st.session_state.llm_client
 
     user_input = st.text_input("Enter your question:")
     if st.button("Ask"):
         with st.spinner('Processing...'):
             question = user_input
-            v = embedding_model.encode(question)
-            answer_data = rag(
-                search_func=functools.partial(elasticsearch_knn, es_client, 'vector'),
-                llm_func=functools.partial(llm_ollama, ol_client),
-                build_prompt_func=build_prompt,
-                query=question,
-                query_vec=v,
-                model_name='phi3'
+            answer_data = llm_util.rag(
+                search_func=functools.partial(elastic_util.query_knn, es_client, embedding_model, 'vector'),
+                llm_func=functools.partial(llm_util.llm, llm_client, embedding_model),
+                build_prompt_func=llm_util.build_prompt,
+                query=question
             )
             st.success("Completed!")
             st.write(answer_data['answer'])
@@ -163,7 +46,14 @@ def main():
             st.write(f"Total tokens: {answer_data['total_tokens']}")
 
             conversation_id = str(uuid.uuid4())
-            save_conversation(conversation_id, user_input, answer_data)
+            db_util.save_conversation(conversation_id, user_input, answer_data)
 
 if __name__ == "__main__":
-    main()
+    logging.basicConfig(level=config.logging_level)
+
+    # todo_spencer
+    elastic_util.ELASTIC_HOST = "localhost"
+    llm_util.OLLAMA_HOST = "localhost"
+    db_util.POSTGRES_HOST = "localhost"
+
+    app_main()

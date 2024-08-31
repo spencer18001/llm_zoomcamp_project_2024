@@ -1,21 +1,43 @@
-import os
-import psycopg2
-from psycopg2.extras import DictCursor
-from datetime import datetime, timezone
+import logging, os
+from datetime import datetime
 from zoneinfo import ZoneInfo
+import psycopg2
 
-tz = ZoneInfo("Europe/Berlin")
+from proj_util import check_service
 
-def get_db_connection():
-    return psycopg2.connect(
-        host="localhost",
-        database="project_assistant",
-        user="admin",
-        password="admin",
+TZ = os.getenv("TZ", "America/Puerto_Rico")
+
+POSTGRES_HOST = "postgres"
+POSTGRES_PORT = 5432
+POSTGRES_DB = os.getenv("POSTGRES_DB", "detective_assistant")
+POSTGRES_USER = os.getenv("POSTGRES_USER", "admin")
+POSTGRES_PASSWORD = os.getenv("POSTGRES_PASSWORD", "admin")
+
+_logger = logging.getLogger(__name__)
+
+# todo_spencer: db time zone?
+_tz = ZoneInfo(TZ)
+
+def create_connection():
+    log_prefix = "create_db_connection"
+
+    if not check_service(POSTGRES_HOST, POSTGRES_PORT):
+        _logger.error(f"{log_prefix}: failed!")
+        return None
+
+    connection = psycopg2.connect(
+        host=POSTGRES_HOST,
+        port=POSTGRES_PORT,
+        database=POSTGRES_DB,
+        user=POSTGRES_USER,
+        password=POSTGRES_PASSWORD,
     )
+    return connection
 
 def init_db():
-    conn = get_db_connection()
+    log_prefix = "init_db"
+
+    conn = create_connection()
     try:
         with conn.cursor() as cur:
             cur.execute("DROP TABLE IF EXISTS feedback")
@@ -42,14 +64,18 @@ def init_db():
                 )
             """)
         conn.commit()
+
+        _logger.info(f"{log_prefix}: success.")
     finally:
         conn.close()
 
 def save_conversation(conversation_id, question, answer_data, timestamp=None):
-    if timestamp is None:
-        timestamp = datetime.now(tz)
+    log_prefix = "save_conversation"
 
-    conn = get_db_connection()
+    if timestamp is None:
+        timestamp = datetime.now(_tz)
+
+    conn = create_connection()
     try:
         with conn.cursor() as cur:
             cur.execute(
@@ -70,52 +96,38 @@ def save_conversation(conversation_id, question, answer_data, timestamp=None):
                 ),
             )
         conn.commit()
+
+        _logger.info(f"{log_prefix}: success.")
+    except Exception as e:
+        _logger.error(f"{log_prefix}: failed! e={str(e)}")
     finally:
         conn.close()
 
 def save_feedback(conversation_id, feedback, timestamp=None):
-    if timestamp is None:
-        timestamp = datetime.now(tz)
+    log_prefix = "save_feedback"
 
-    conn = get_db_connection()
+    if timestamp is None:
+        timestamp = datetime.now(_tz)
+
+    conn = create_connection()
     try:
         with conn.cursor() as cur:
             cur.execute(
-                "INSERT INTO feedback (conversation_id, feedback, timestamp) VALUES (%s, %s, COALESCE(%s, CURRENT_TIMESTAMP))",
-                (conversation_id, feedback, timestamp),
+                """
+                INSERT INTO feedback
+                (conversation_id, feedback, timestamp)
+                VALUES (%s, %s, %s))
+                """,
+                (
+                    conversation_id,
+                    feedback,
+                    timestamp
+                ),
             )
         conn.commit()
-    finally:
-        conn.close()
 
-def get_recent_conversations(limit=5, relevance=None):
-    conn = get_db_connection()
-    try:
-        with conn.cursor(cursor_factory=DictCursor) as cur:
-            query = """
-                SELECT c.*, f.feedback
-                FROM conversations c
-                LEFT JOIN feedback f ON c.id = f.conversation_id
-            """
-            if relevance:
-                query += f" WHERE c.relevance = '{relevance}'"
-            query += " ORDER BY c.timestamp DESC LIMIT %s"
-
-            cur.execute(query, (limit,))
-            return cur.fetchall()
-    finally:
-        conn.close()
-
-def get_feedback_stats():
-    conn = get_db_connection()
-    try:
-        with conn.cursor(cursor_factory=DictCursor) as cur:
-            cur.execute("""
-                SELECT 
-                    SUM(CASE WHEN feedback > 0 THEN 1 ELSE 0 END) as thumbs_up,
-                    SUM(CASE WHEN feedback < 0 THEN 1 ELSE 0 END) as thumbs_down
-                FROM feedback
-            """)
-            return cur.fetchone()
+        _logger.info(f"{log_prefix}: success.")
+    except Exception as e:
+        _logger.error(f"{log_prefix}: failed! e={str(e)}")
     finally:
         conn.close()
