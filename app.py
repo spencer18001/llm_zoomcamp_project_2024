@@ -13,7 +13,7 @@ import grafana_util
 
 _logger = logging.getLogger(__name__)
 
-def init(es_client):
+def init():
     st.write("🔍 **Checking if Elasticsearch index exists...**")
     if not elastic_util.check_inited(st.session_state.es_client):
         st.write("🛠️ **Elasticsearch index does not exist. Creating index...**")
@@ -43,7 +43,7 @@ def init(es_client):
 def app_main():
     st.title(config.proj_name)
     
-    if not st.session_state.initialized:
+    if "initialized" not in st.session_state:
         with st.spinner('Initializing...'):
             st.session_state.es_client = elastic_util.create_client()
             st.session_state.llm_client = llm_util.create_client()
@@ -53,19 +53,22 @@ def app_main():
 
             st.session_state.initialized = True
 
-            time.sleep(1)
-            st.experimental_rerun()
+            time.sleep(3)
+            st.rerun()
     else:
         es_client = st.session_state.es_client
         embedding_model = st.session_state.embedding_model
         llm_client = st.session_state.llm_client
+
+    if "conversation_id" not in st.session_state:
+        st.session_state.conversation_id = None
 
     search_type = st.radio(
         "Select search type:",
         ["knn", "hybrid", "hybrid_rrf"]
     )
 
-    user_input = st.text_input("Enter your question:")
+    user_input = st.text_input("Enter your question:", key="user_input")
     if st.button("Ask"):
         with st.spinner('Processing...'):
             if search_type == "hybrid":
@@ -77,8 +80,8 @@ def app_main():
 
             question = user_input
             answer_data = llm_util.rag(
-                search_func=functools.partial(search_func, es_client, embedding_model, 'vector'),
-                llm_func=functools.partial(llm_util.llm, llm_client, embedding_model),
+                search_func=functools.partial(search_func, es_client, embedding_model),
+                llm_func=functools.partial(llm_util.llm, llm_client),
                 build_prompt_func=llm_util.build_prompt,
                 query=question
             )
@@ -87,16 +90,21 @@ def app_main():
             st.write(f"Response time: {answer_data['response_time']:.2f} seconds")
             st.write(f"Total tokens: {answer_data['total_tokens']}")
 
-            conversation_id = str(uuid.uuid4())
-            db_util.save_conversation(conversation_id, user_input, search_type, answer_data)
+            st.session_state.conversation_id = str(uuid.uuid4())
+            db_util.save_conversation(st.session_state.conversation_id, user_input, search_type, answer_data)
     
-    col1, col2 = st.columns(2)
-    with col1:
-        if st.button("+1"):
-            db_util.save_feedback(st.session_state.conversation_id, 1)
-    with col2:
-        if st.button("-1"):
-            db_util.save_feedback(st.session_state.conversation_id, -1)
+    if st.session_state.conversation_id:
+        col1, col2 = st.columns(2)
+        with col1:
+            if st.button("+1", on_click=lambda: setattr(st.session_state, 'user_input', '')):
+                db_util.save_feedback(st.session_state.conversation_id, 1)
+                st.session_state.conversation_id = None
+                st.rerun()
+        with col2:
+            if st.button("-1", on_click=lambda: setattr(st.session_state, 'user_input', '')):
+                db_util.save_feedback(st.session_state.conversation_id, -1)
+                st.session_state.conversation_id = None
+                st.rerun()
 
 if __name__ == "__main__":
     logging.basicConfig(level=config.logging_level)
@@ -105,5 +113,6 @@ if __name__ == "__main__":
     elastic_util.ELASTIC_HOST = "localhost"
     llm_util.OLLAMA_HOST = "localhost"
     db_util.POSTGRES_HOST = "localhost"
+    grafana_util.GRAFANA_HOST = "localhost"
 
     app_main()

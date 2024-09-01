@@ -7,7 +7,6 @@ from proj_util import check_service
 
 ELASTIC_HOST = "elasticsearch"
 ELASTIC_PORT = 9200
-ELASTIC_URL = f"http://{ELASTIC_HOST}:{ELASTIC_PORT}"
 
 _logger = logging.getLogger(__name__)
 
@@ -18,7 +17,7 @@ def create_client():
         _logger.error(f"{log_prefix}: failed!")
         return None
 
-    client = Elasticsearch(ELASTIC_URL)
+    client = Elasticsearch(f"http://{ELASTIC_HOST}:{ELASTIC_PORT}")
 
     _logger.info(f"{log_prefix}: success. info={json.dumps(client.info().raw, indent=2)}")
     return client

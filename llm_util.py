@@ -9,7 +9,6 @@ from proj_util import check_service
 # todo_spencer: 外部測試用
 OLLAMA_HOST = "ollama"
 OLLAMA_PORT = 11434
-OLLAMA_URL = f"http://{OLLAMA_HOST}:{OLLAMA_PORT}"
 
 _logger = logging.getLogger(__name__)
 
@@ -27,14 +26,16 @@ def create_client():
     if not check_service(OLLAMA_HOST, OLLAMA_PORT):
         _logger.error(f"{log_prefix}: failed!")
         return None
+    
+    ollama_url = f"http://{OLLAMA_HOST}:{OLLAMA_PORT}"
 
-    response = requests.post(f'{OLLAMA_URL}/api/pull', json={
+    response = requests.post(f'{ollama_url}/api/pull', json={
         "name": config.llm_model_name,
         "stream": False
     })
     _logger.debug(f"{log_prefix}: pull model. response={response}")
 
-    return OpenAI(api_key="ollama", base_url=f"{OLLAMA_URL}/v1/")
+    return OpenAI(api_key="ollama", base_url=f"{ollama_url}/v1/")
 
 def build_prompt(query, search_results):
     prompt_template = """

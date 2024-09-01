@@ -64,7 +64,7 @@ def ingest():
 
     content = load_text()
     chunks = chunk(content)
-    embedding_model = llm_util.create_embedding_model(config.embedding_model_name)
+    embedding_model = llm_util.create_embedding_model()
     docs = embed_chunks(chunks, embedding_model)
     embedding_size = embedding_model.get_sentence_embedding_dimension()
     index_docs(embedding_size, docs)

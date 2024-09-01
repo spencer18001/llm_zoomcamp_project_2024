@@ -6,14 +6,12 @@ import db_util
 
 POSTGRES_HOST = "postgres"
 POSTGRES_PORT = 5432
-POSTGRES_URL = f"http://{POSTGRES_HOST}:{POSTGRES_PORT}"
 POSTGRES_DB = os.getenv("POSTGRES_DB", "detective_assistant")
 POSTGRES_USER = os.getenv("POSTGRES_USER", "admin")
 POSTGRES_PASSWORD = os.getenv("POSTGRES_PASSWORD", "admin")
 
 GRAFANA_HOST = "grafana"
 GRAFANA_PORT = 3000
-GRAFANA_URL = f"http://{GRAFANA_HOST}:{GRAFANA_PORT}"
 GRAFANA_USER = os.getenv("GRAFANA_ADMIN_USER", "admin")
 GRAFANA_PASSWORD = os.getenv("GRAFANA_ADMIN_PASSWORD", "admin")
 
@@ -25,6 +23,8 @@ def create_api_key():
     if not check_service(GRAFANA_HOST, GRAFANA_PORT):
         _logger.error(f"{log_prefix}: failed!")
         return None
+    
+    grafana_url = f"http://{GRAFANA_HOST}:{GRAFANA_PORT}"
 
     auth = (GRAFANA_USER, GRAFANA_PASSWORD)
     headers = {"Content-Type": "application/json"}
@@ -33,7 +33,7 @@ def create_api_key():
         "role": "Admin",
     }
     response = requests.post(
-        f"{GRAFANA_URL}/api/auth/keys", auth=auth, headers=headers, json=payload
+        f"{grafana_url}/api/auth/keys", auth=auth, headers=headers, json=payload
     )
 
     if response.status_code == 200:
@@ -43,13 +43,13 @@ def create_api_key():
         _logger.debug(f"{log_prefix}: api key already exists, updating...")
 
         # find the existing key
-        keys_response = requests.get(f"{GRAFANA_URL}/api/auth/keys", auth=auth)
+        keys_response = requests.get(f"{grafana_url}/api/auth/keys", auth=auth)
         if keys_response.status_code == 200:
             for key in keys_response.json():
                 if key["name"] == "ProgrammaticKey":
                     # delete the existing key
                     delete_response = requests.delete(
-                        f"{GRAFANA_URL}/api/auth/keys/{key['id']}", auth=auth
+                        f"{grafana_url}/api/auth/keys/{key['id']}", auth=auth
                     )
                     if delete_response.status_code == 200:
                         _logger.debug(f"{log_prefix}: existing key deleted")
@@ -67,6 +67,8 @@ def check_inited():
 def create_or_update_datasource(api_key):
     log_prefix = "create_or_update_datasource"
 
+    grafana_url = f"http://{GRAFANA_HOST}:{GRAFANA_PORT}"
+
     headers = {
         "Authorization": f"Bearer {api_key}",
         "Content-Type": "application/json",
@@ -74,7 +76,7 @@ def create_or_update_datasource(api_key):
     datasource_payload = {
         "name": "PostgreSQL",
         "type": "postgres",
-        "url": POSTGRES_URL,
+        "url": f"{POSTGRES_HOST}:{POSTGRES_PORT}",
         "access": "proxy",
         "user": POSTGRES_USER,
         "database": POSTGRES_DB,
@@ -87,7 +89,7 @@ def create_or_update_datasource(api_key):
 
     # first, try to get the existing datasource
     response = requests.get(
-        f"{GRAFANA_URL}/api/datasources/name/{datasource_payload['name']}",
+        f"{grafana_url}/api/datasources/name/{datasource_payload['name']}",
         headers=headers,
     )
 
@@ -98,7 +100,7 @@ def create_or_update_datasource(api_key):
 
         _logger.debug(f"{log_prefix}: updating existing datasource. ds_id={datasource_id}")
         response = requests.put(
-            f"{GRAFANA_URL}/api/datasources/{datasource_id}",
+            f"{grafana_url}/api/datasources/{datasource_id}",
             headers=headers,
             json=datasource_payload,
         )
@@ -107,7 +109,7 @@ def create_or_update_datasource(api_key):
         _logger.debug(f"{log_prefix}: creating new datasource.")
 
         response = requests.post(
-            f"{GRAFANA_URL}/api/datasources", headers=headers, json=datasource_payload
+            f"{grafana_url}/api/datasources", headers=headers, json=datasource_payload
         )
     _logger.debug(f"{log_prefix}: response. status_code={response.status_code}, headers={response.headers}, text={response.text}")
 
@@ -120,6 +122,8 @@ def create_or_update_datasource(api_key):
 
 def create_dashboard(api_key, datasource_uid):
     log_prefix = "create_dashboard"
+
+    grafana_url = f"http://{GRAFANA_HOST}:{GRAFANA_PORT}"
 
     headers = {
         "Authorization": f"Bearer {api_key}",
@@ -166,7 +170,7 @@ def create_dashboard(api_key, datasource_uid):
     }
     _logger.debug(f"{log_prefix}: sending dashboard creation request...")
     response = requests.post(
-        f"{GRAFANA_URL}/api/dashboards/db", headers=headers, json=dashboard_payload
+        f"{grafana_url}/api/dashboards/db", headers=headers, json=dashboard_payload
     )
     _logger.debug(f"{log_prefix}: response. status_code={response.status_code}, text={response.text}")
 

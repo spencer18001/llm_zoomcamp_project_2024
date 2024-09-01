@@ -139,7 +139,7 @@ def save_feedback(conversation_id, feedback, timestamp=None):
                 """
                 INSERT INTO feedback
                 (conversation_id, feedback, timestamp)
-                VALUES (%s, %s, %s))
+                VALUES (%s, %s, %s)
                 """,
                 (
                     conversation_id,
@@ -165,7 +165,7 @@ def save_keyvalue(key, value):
                 """
                 INSERT INTO keyvalues
                 (key, value)
-                VALUES (%s, %s))
+                VALUES (%s, %s)
                 """,
                 (
                     key,
