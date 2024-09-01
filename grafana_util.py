@@ -2,6 +2,7 @@ import logging, os, json, requests
 
 from proj_config import config
 from proj_util import check_service
+import db_util
 
 POSTGRES_HOST = "postgres"
 POSTGRES_PORT = 5432
@@ -59,6 +60,9 @@ def create_api_key():
     else:
         _logger.error(f"{log_prefix}: failed! resp={response.text}")
         return None
+
+def check_inited():
+    return bool(db_util.get_value_by_key(config.grafana_api_key_name))
 
 def create_or_update_datasource(api_key):
     log_prefix = "create_or_update_datasource"
@@ -182,4 +186,5 @@ def init_grafana():
     if not datasource_uid:
         return
 
-    create_dashboard(api_key, datasource_uid)
+    if create_dashboard(api_key, datasource_uid):
+        db_util.save_keyvalue(config.grafana_api_key_name, api_key)

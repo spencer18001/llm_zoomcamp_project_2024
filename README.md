@@ -44,3 +44,5 @@
     - [ ] User query rewriting (1 point)
 - [ ] Bonus points (not covered in the course)
     - Deployment to the cloud (2 points)
+
+- 16/23

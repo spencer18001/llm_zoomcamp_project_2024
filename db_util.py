@@ -47,6 +47,7 @@ def init_db():
                 CREATE TABLE conversations (
                     id TEXT PRIMARY KEY,
                     question TEXT NOT NULL,
+                    search_type TEXT NOT NULL,
                     answer TEXT NOT NULL,
                     response_time FLOAT NOT NULL,
                     prompt_tokens INTEGER NOT NULL,
@@ -63,13 +64,34 @@ def init_db():
                     timestamp TIMESTAMP WITH TIME ZONE NOT NULL
                 )
             """)
+            cur.execute("""
+                CREATE TABLE keyvalues (
+                    key TEXT NOT NULL,
+                    value TEXT NOT NULL
+                )
+            """)
         conn.commit()
 
         _logger.info(f"{log_prefix}: success.")
     finally:
         conn.close()
 
-def save_conversation(conversation_id, question, answer_data, timestamp=None):
+def check_inited():
+    conn = create_connection()
+    try:
+        with conn.cursor() as cur:
+            cur.execute("""
+                SELECT EXISTS (
+                    SELECT 1
+                    FROM information_schema.tables 
+                    WHERE table_name = 'keyvalues'
+                );
+            """)
+            return cur.fetchone()[0]
+    finally:
+        conn.close()
+
+def save_conversation(conversation_id, question, search_type, answer_data, timestamp=None):
     log_prefix = "save_conversation"
 
     if timestamp is None:
@@ -81,12 +103,13 @@ def save_conversation(conversation_id, question, answer_data, timestamp=None):
             cur.execute(
                 """
                 INSERT INTO conversations 
-                (id, question, answer, response_time, prompt_tokens, completion_tokens, total_tokens, timestamp)
-                VALUES (%s, %s, %s, %s, %s, %s, %s, %s)
+                (id, question, search_type, answer, response_time, prompt_tokens, completion_tokens, total_tokens, timestamp)
+                VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s)
                 """,
                 (
                     conversation_id,
                     question,
+                    search_type,
                     answer_data["answer"],
                     answer_data["response_time"],
                     answer_data["prompt_tokens"],
@@ -129,5 +152,57 @@ def save_feedback(conversation_id, feedback, timestamp=None):
         _logger.info(f"{log_prefix}: success.")
     except Exception as e:
         _logger.error(f"{log_prefix}: failed! e={str(e)}")
+    finally:
+        conn.close()
+
+def save_keyvalue(key, value):
+    log_prefix = "save_keyvalue"
+
+    conn = create_connection()
+    try:
+        with conn.cursor() as cur:
+            cur.execute(
+                """
+                INSERT INTO keyvalues
+                (key, value)
+                VALUES (%s, %s))
+                """,
+                (
+                    key,
+                    value,
+                ),
+            )
+        conn.commit()
+
+        _logger.info(f"{log_prefix}: success.")
+    except Exception as e:
+        _logger.error(f"{log_prefix}: failed! e={str(e)}")
+    finally:
+        conn.close()
+
+def get_value_by_key(key):
+    log_prefix = "get_value_by_key"
+
+    conn = create_connection()
+    try:
+        with conn.cursor() as cur:
+            cur.execute(
+                """
+                SELECT value FROM keyvalues WHERE key = %s
+                """,
+                (key,)
+            )
+            result = cur.fetchone()
+
+            if result:
+                _logger.info(f"{log_prefix}: success. key={key}")
+                return result[0]  # 返回第一列的值，即 'value'
+            else:
+                _logger.warning(f"{log_prefix}: no value found. key={key}")
+                return None
+    except Exception as e:
+        _logger.error(f"{log_prefix}: failed! e={str(e)}")
+        return None
+
     finally:
         conn.close()

@@ -23,10 +23,11 @@ def create_client():
     _logger.info(f"{log_prefix}: success. info={json.dumps(client.info().raw, indent=2)}")
     return client
 
+def check_inited(es_client):
+    return es_client.indices.exists(index=config.elastic_index_name)
+
 def index(es_client, properties, docs):
     log_prefix = "index"
-
-    es_client = create_client()
 
     index_settings = {
         "settings": {
@@ -44,10 +45,10 @@ def index(es_client, properties, docs):
 
     _logger.info(f"{log_prefix}: success.")
 
-def query_knn(es_client, embedding_model, field, question):
+def query_knn(es_client, embedding_model, question):
     v = embedding_model.encode(question)
     knn = {
-        "field": field,
+        "field": "vector",
         "query_vector": v,
         "k": config.elastic_result_num,
         "num_candidates": 10000
@@ -65,3 +66,99 @@ def query_knn(es_client, embedding_model, field, question):
     for hit in es_results['hits']['hits']:
         result_docs.append(hit['_source'])
     return result_docs
+
+def query_hybrid(es_client, embedding_model, question):
+    v = embedding_model.encode(question)
+    knn_query = {
+        "field": "vector",
+        "query_vector": v,
+        "k": config.elastic_result_num,
+        "num_candidates": 10000,
+        "boost": 0.5
+    }
+    keyword_query = {
+        "bool": {
+            "must": {
+                "multi_match": {
+                    "query": question,
+                    "fields": ["text"],
+                    "type": "best_fields",
+                    "boost": 0.5,
+                }
+            }
+        }
+    }
+    search_query = {
+        "knn": knn_query,
+        "query": keyword_query,
+        "size": config.elastic_result_num,
+        "_source": ["text"]
+    }
+    es_results = es_client.search(
+        index=config.elastic_index_name,
+        body=search_query
+    )
+    
+    result_docs = []
+    for hit in es_results['hits']['hits']:
+        result_docs.append(hit['_source'])
+    return result_docs
+
+def compute_rrf(rank, k=60):
+    return 1 / (k + rank)
+
+def query_hybrid_rrf(es_client, embedding_model, question):
+    v = embedding_model.encode(question)
+    knn_query = {
+        "field": "vector",
+        "query_vector": v,
+        "k": config.elastic_result_num * 2,
+        "num_candidates": 10000,
+        "boost": 0.5
+    }
+    keyword_query = {
+        "bool": {
+            "must": {
+                "multi_match": {
+                    "query": question,
+                    "fields": ["text"],
+                    "type": "best_fields",
+                    "boost": 0.5,
+                }
+            }
+        }
+    }
+    knn_results = es_client.search(
+        index=config.elastic_index_name,
+        body={
+            "knn": knn_query, 
+            "size": config.elastic_result_num * 2,
+        }
+    )['hits']['hits']
+    keyword_results = es_client.search(
+        index=config.elastic_index_name,
+        body={
+            "query": keyword_query, 
+            "size": config.elastic_result_num * 2,
+        }
+    )['hits']['hits']
+    
+    rrf_scores = {}
+    for rank, hit in enumerate(knn_results):
+        doc_id = hit['_id']
+        rrf_scores[doc_id] = compute_rrf(rank + 1)
+
+    for rank, hit in enumerate(keyword_results):
+        doc_id = hit['_id']
+        if doc_id in rrf_scores:
+            rrf_scores[doc_id] += compute_rrf(rank + 1)
+        else:
+            rrf_scores[doc_id] = compute_rrf(rank + 1)
+
+    reranked_docs = sorted(rrf_scores.items(), key=lambda x: x[1], reverse=True)
+    
+    final_results = []
+    for doc_id, score in reranked_docs[:config.elastic_result_num]:
+        doc = es_client.get(index=config.elastic_index_name, id=doc_id)
+        final_results.append(doc['_source'])
+    return final_results
