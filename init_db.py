@@ -9,8 +9,6 @@ if __name__ == "__main__":
 
     load_dotenv()
 
-    logging.basicConfig(level=config.logging_level)
-
     db_util.POSTGRES_HOST = "localhost"
     db_util.POSTGRES_PORT = os.getenv("POSTGRES_LOCAL_PORT", 5432)
 

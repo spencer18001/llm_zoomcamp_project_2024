@@ -16,6 +16,7 @@ GRAFANA_USER = os.getenv("GRAFANA_ADMIN_USER", "admin")
 GRAFANA_PASSWORD = os.getenv("GRAFANA_ADMIN_PASSWORD", "admin")
 
 _logger = logging.getLogger(__name__)
+_logger.setLevel(config.logging_level)
 
 def create_api_key():
     log_prefix = "create_api_key"

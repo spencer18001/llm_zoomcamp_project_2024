@@ -12,6 +12,7 @@ import db_util
 import grafana_util
 
 _logger = logging.getLogger(__name__)
+_logger.setLevel(config.logging_level)
 
 def init():
     st.write("🔍 **Checking if Elasticsearch index exists...**")
@@ -107,8 +108,6 @@ def app_main():
                 st.rerun()
 
 if __name__ == "__main__":
-    logging.basicConfig(level=config.logging_level)
-
     # todo_spencer
     elastic_util.ELASTIC_HOST = "localhost"
     llm_util.OLLAMA_HOST = "localhost"

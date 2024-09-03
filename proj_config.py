@@ -4,7 +4,7 @@ class Config:
     def __init__(self, logging_level, chk_serv_timeout, chk_serv_retries, chk_serv_delay,
         proj_name, data_file_path, chunk_size, chunk_model_name, embedding_model_name,
         elastic_index_name, elastic_result_num, llm_model_name, 
-        grafana_api_key_name, dashboard_file_path):
+        grafana_api_key_name, dashboard_file_path, ground_truth_file_path):
         self.logging_level = logging_level
         self.chk_serv_timeout = chk_serv_timeout
         self.chk_serv_retries = chk_serv_retries
@@ -19,6 +19,7 @@ class Config:
         self.llm_model_name = llm_model_name
         self.grafana_api_key_name = grafana_api_key_name
         self.dashboard_file_path = dashboard_file_path
+        self.ground_truth_file_path = ground_truth_file_path
 
 config = Config(
     logging_level=logging.DEBUG,
@@ -34,5 +35,6 @@ config = Config(
     elastic_result_num=5,
     llm_model_name="phi3",
     grafana_api_key_name="grafana_api_key",
-    dashboard_file_path="dashboard.json"
+    dashboard_file_path="dashboard.json",
+    ground_truth_file_path="ground-truth-data.csv"
 )

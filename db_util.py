@@ -3,6 +3,7 @@ from datetime import datetime
 from zoneinfo import ZoneInfo
 import psycopg2
 
+from proj_config import config
 from proj_util import check_service
 
 TZ = os.getenv("TZ", "America/Puerto_Rico")
@@ -14,6 +15,7 @@ POSTGRES_USER = os.getenv("POSTGRES_USER", "admin")
 POSTGRES_PASSWORD = os.getenv("POSTGRES_PASSWORD", "admin")
 
 _logger = logging.getLogger(__name__)
+_logger.setLevel(config.logging_level)
 
 # todo_spencer: db time zone?
 _tz = ZoneInfo(TZ)

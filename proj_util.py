@@ -3,6 +3,7 @@ import logging, time, socket
 from proj_config import config
 
 _logger = logging.getLogger(__name__)
+_logger.setLevel(config.logging_level)
 
 def check_service(host, port):
     log_prefix = "check_service"

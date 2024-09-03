@@ -9,6 +9,7 @@ ELASTIC_HOST = "elasticsearch"
 ELASTIC_PORT = 9200
 
 _logger = logging.getLogger(__name__)
+_logger.setLevel(config.logging_level)
 
 def create_client():
     log_prefix = "create_client"
@@ -57,7 +58,8 @@ def query_text(es_client, embedding_model, question):
                     }
                 }
             }
-        }
+        },
+        "_source": ["text", "id"]
     }
     es_results = es_client.search(
         index=config.elastic_index_name,
@@ -79,7 +81,7 @@ def query_knn(es_client, embedding_model, question):
     }
     search_query = {
         "knn": knn,
-        "_source": ["text"]
+        "_source": ["text", "id"]
     }
     es_results = es_client.search(
         index=config.elastic_index_name,
@@ -116,7 +118,7 @@ def query_hybrid(es_client, embedding_model, question):
         "knn": knn_query,
         "query": keyword_query,
         "size": config.elastic_result_num,
-        "_source": ["text"]
+        "_source": ["text", "id"]
     }
     es_results = es_client.search(
         index=config.elastic_index_name,

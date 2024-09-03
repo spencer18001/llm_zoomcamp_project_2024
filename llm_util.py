@@ -11,6 +11,7 @@ OLLAMA_HOST = "ollama"
 OLLAMA_PORT = 11434
 
 _logger = logging.getLogger(__name__)
+_logger.setLevel(config.logging_level)
 
 def create_embedding_model():
     log_prefix = "create_embedding_model"

@@ -9,8 +9,6 @@ if __name__ == "__main__":
 
     load_dotenv()
 
-    logging.basicConfig(level=config.logging_level)
-
     grafana_util.POSTGRES_HOST = "localhost"
     grafana_util.POSTGRES_PORT = os.getenv("POSTGRES_LOCAL_PORT", 5432)
 
