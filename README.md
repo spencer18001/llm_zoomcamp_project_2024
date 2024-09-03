@@ -9,10 +9,8 @@
 - [x] RAG flow (2 points)
     - knowledge base: elasticsearch
     - LLM: ollama phi3
-- [ ] Retrieval evaluation
-    - 0 points: No evaluation of retrieval is provided
-    - 1 point: Only one retrieval approach is evaluated
-    - 2 points: Multiple retrieval approaches are evaluated, and the best one is used
+- [x] Retrieval evaluation
+    - hit_rate, mrr (2 points)
 - [ ] RAG evaluation
     - 0 points: No evaluation of RAG is provided
     - 1 point: Only one RAG approach (e.g., one prompt) is evaluated
@@ -39,4 +37,4 @@
 - [ ] Bonus points (not covered in the course)
     - Deployment to the cloud (2 points)
 
-- 10/23 points
+- 12/23 points

@@ -44,6 +44,31 @@ def index(es_client, properties, docs):
 
     _logger.info(f"{log_prefix}: success.")
 
+def query_text(es_client, embedding_model, question):
+    search_query = {
+        "size": config.elastic_result_num,
+        "query": {
+            "bool": {
+                "must": {
+                    "multi_match": {
+                        "query": question,
+                        "fields": ["text"],
+                        "type": "best_fields"
+                    }
+                }
+            }
+        }
+    }
+    es_results = es_client.search(
+        index=config.elastic_index_name,
+        body=search_query
+    )
+
+    result_docs = []
+    for hit in es_results['hits']['hits']:
+        result_docs.append(hit['_source'])
+    return result_docs
+
 def query_knn(es_client, embedding_model, question):
     v = embedding_model.encode(question)
     knn = {

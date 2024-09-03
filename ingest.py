@@ -31,10 +31,11 @@ def embed_chunks(chunks, embedding_model):
     log_prefix = "embed_chunks"
 
     docs = []
-    for chunk in tqdm(chunks):
+    for i, chunk in enumerate(tqdm(chunks)):
         doc = {
-            'text': chunk,
-            'vector': embedding_model.encode(chunk),
+            "text": chunk,
+            "vector": embedding_model.encode(chunk),
+            "id": i,
         }
         docs.append(doc)
 
@@ -53,7 +54,8 @@ def index_docs(embedding_size, docs):
             "dims": embedding_size,
             "index": True,
             "similarity": "cosine"
-        }
+        },
+        "id": {"type": "keyword"},
     }
     elastic_util.index(es_client, properties, docs)
 
