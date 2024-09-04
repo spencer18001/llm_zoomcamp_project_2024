@@ -13,24 +13,24 @@
   - [Notebook](#notebook)
 - [Todo](#todo)
 
-## Project Overview [🔝](#llm_zoomcamp_project_2024)
+## Project Overview
 This project uses a short detective story as a knowledge base, allowing users to ask questions and get answers using RAG (Retrieval-Augmented Generation) techniques.
 
-## Requirements [🔝](#llm_zoomcamp_project_2024)
+## Requirements
 - GitHub Codespaces
   - `Python 3.12.1` (optional, only needed for manual script execution)
   - `Docker 27.0.3-1`
 - Gemini API key (optional, free, for evaluation)
 
-## Components [🔝](#llm_zoomcamp_project_2024)
+## Components
 - Dataset: [The_Adventure_of_the_Speckled_Band.txt](https://en.wikisource.org/wiki/The_Adventures_of_Sherlock_Holmes_(1892,_US)/The_Adventure_of_the_Speckled_Band)
 - Knowledge base: `Elasticsearch`
 - LLM: `ollama phi3`
 - Embedding model: `all-mpnet-base-v2`
 
-## Features [🔝](#llm_zoomcamp_project_2024)
+## Features
 
-#### RAG [🔝](#llm_zoomcamp_project_2024)
+#### RAG
 - Start containers:
   ```
   docker compose up
@@ -46,7 +46,7 @@ This project uses a short detective story as a knowledge base, allowing users to
   - Click `Ask` to perform the RAG query (~30s for response)
   - Provide feedback with `+1` or `-1`
 
-#### Manual Script Execution [🔝](#llm_zoomcamp_project_2024)
+#### Manual Script Execution
 Optional, since the Streamlit app automates these tasks.
 - Ensure containers are running:
   ```
@@ -79,7 +79,7 @@ Optional, since the Streamlit app automates these tasks.
   python init_granafa.py
   ```
 
-#### Retrieval Evaluation [🔝](#llm_zoomcamp_project_2024)
+#### Retrieval Evaluation
 Evaluate and compare text (keyword) search vs. vector (semantic) search.
 - Metrics: Hit Rate (HR), Mean Reciprocal Rank (MRR)
   ```
@@ -99,7 +99,7 @@ Evaluate and compare text (keyword) search vs. vector (semantic) search.
   python eval_retrieval.py
   ```
 
-#### Dashboard [🔝](#llm_zoomcamp_project_2024)
+#### Dashboard
 Access Grafana dashboard (`localhost:3000`), default login: admin/admin.
 - **Last 5 Conversations (Table Panel):** Lists the last five conversations with timestamps, questions, and answers.
 - **Feedback Summary (+1/-1 Pie Chart):** Displays user feedback with counts of positive and negative responses.
@@ -107,13 +107,13 @@ Access Grafana dashboard (`localhost:3000`), default login: admin/admin.
 - **Search Type Distribution (Bar Chart Panel):** Shows the frequency of different search types.
 - **Response Time (Time Series Panel):** Monitors response times to assess performance.
 
-#### Notebook [🔝](#llm_zoomcamp_project_2024)
+#### Notebook
 Executable in Colab.
 - **ground_truth_data.ipynb:**
   - Use Gemini API to generate five related questions for each document.
   - Outputs `ground-truth-data.csv`.
 
-## Todo [🔝](#llm_zoomcamp_project_2024)
+## Todo
 - [x] Problem description (2 points)
 - [x] RAG flow (2 points)
     - knowledge base: elasticsearch
