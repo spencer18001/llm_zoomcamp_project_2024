@@ -2,117 +2,116 @@
 
 ## Table of Contents
 
-- [環境需求](#環境需求)
-- [主要元件](#主要元件)
-- [專案概述](#專案概述)
-- [功能介紹](#功能介紹)
+- [Project Overview](#project-overview)
+- [Requirements](#requirements)
+- [Components](#components)
+- [Features](#features)
   - [RAG](#rag)
-  - [手動執行 Script](#手動執行-script)
-  - [Retrieval evaluation](#retrieval-evaluation)
+  - [Manual Script Execution](#manual-script-execution)
+  - [Retrieval Evaluation](#retrieval-evaluation)
   - [Dashboard](#dashboard)
   - [Notebook](#notebook)
 - [Todo](#todo)
 
-## 環境需求
-- Github codespaces
-    - `Python 3.12.1` (可選, 只有在需要手動執行 script 時才需要)
-    - `Docker 27.0.3-1`
-- Gemini api key (可選, free, for evaluation)
+## Project Overview
+This project uses a short detective story as a knowledge base, allowing users to ask questions and get answers using RAG (Retrieval-Augmented Generation) techniques.
 
-## 主要元件
+## Requirements
+- GitHub Codespaces
+  - `Python 3.12.1` (optional, only needed for manual script execution)
+  - `Docker 27.0.3-1`
+- Gemini API key (optional, free, for evaluation)
+
+## Components
 - Dataset: [The_Adventure_of_the_Speckled_Band.txt](https://en.wikisource.org/wiki/The_Adventures_of_Sherlock_Holmes_(1892,_US)/The_Adventure_of_the_Speckled_Band)
-- Knowledge base: `elasticsearch`
+- Knowledge base: `Elasticsearch`
 - LLM: `ollama phi3`
 - Embedding model: `all-mpnet-base-v2`
 
-## 專案概述
-此專案為讀入一個短篇偵探小說當作知識庫, 使用 RAG 技術讓使用者可以針對故事的內容發問, 獲得有用的資訊
-
-## 功能介紹
+## Features
 
 #### RAG
-- 啟動 containers
-    ```
-    docker compose up
-    ```
-- 連到 streamlit app 網頁 (如 `localhost:8501`)
-- 網頁先自動進行以下初始化動作:
-    - 如有需要, 建立 elasticsearch index (ingestion)
-    - 如有需要, 建立 database table
-    - 如有需要, 建立 grafana dashboard
-- 初始化完成後, 進入詢問的介面
-    - 使用者選擇 elasticsearch 搜尋的類型 (`Select search type:`)
-    - 輸入想問的問題 (`Enter your question:`)
-    - 按下 `Ask`
-    - 此時會進行 RAG 查詢, 約莫 30s 左右, 會回應答案
-    - 可以選擇 `+1`、`-1` 的 feedback
+- Start containers:
+  ```
+  docker compose up
+  ```
+- Access the Streamlit app (`localhost:8501`).
+- The app automatically:
+  - Creates Elasticsearch index (if needed)
+  - Creates database tables (if needed)
+  - Sets up Grafana dashboard (if needed)
+- Once initialized, you can:
+  - Select search type (`Select search type:`)
+  - Ask your question (`Enter your question:`)
+  - Click `Ask` to perform the RAG query (~30s for response)
+  - Provide feedback with `+1` or `-1`
 
-#### 手動執行 Script
-可選, 因為 streamlit app 已自動化處理
-- 確定相關 containers 已啟動
-    ```
-    docker compose up
-    ```
-- 安裝所需的 python package
-    ```
-    pip install -r requirements.txt
-    ```
-- ingestion:
-    - 讀入文字檔
-    - chunking
-    - embedding chunks
-    - 建立 elasticsearch index
-    ```
-    python ingest.py
-    ```
-- 初始資料庫: 建立 database tables
-    - `conversations`: 每次 RAG 查詢的結果與資訊
-    - `feedback`: 使用者 feedback 的計數 (代表回應的 score)
-    - `keyvalues`: 內部使用, 儲存 grafana api key 的 dictionary
-    ```
-    python init_db.py
-    ```
-- 初始 granafa:
-    - 產生 grafana api key
-    - 設定 datasource
-    - 建立 dashboards
-    ```
-    python init_granafa.py
-    ```
+#### Manual Script Execution
+Optional, since the Streamlit app automates these tasks.
+- Ensure containers are running:
+  ```
+  docker compose up
+  ```
+- Install Python packages:
+  ```
+  pip install -r requirements.txt
+  ```
+- Ingest data:
+  - Load text file
+  - Chunk text
+  - Embed chunks
+  - Create Elasticsearch index
+  ```
+  python ingest.py
+  ```
+- Initialize database: create database tables
+  - `conversations`: RAG query results and metadata
+  - `feedback`: User feedback scores
+  - `keyvalues`: Internal storage for Grafana API key
+  ```
+  python init_db.py
+  ```
+- Set up Grafana:
+  - Generate API key
+  - Configure datasource
+  - Create dashboards
+  ```
+  python init_granafa.py
+  ```
 
-#### Retrieval evaluation
-評估比較 text (keyword) search、vector (semantic) search
-- metric: hit Rate (HR)、mean reciprocal rank (MRR)
-    ```
-    text: (hit_rate, mrr)=(0.7419753086419754, 0.6061522633744849)
-    vector: (hit_rate, mrr)=(0.7617283950617284, 0.6104526748971189)
-    ```
-- 啟動 elasticsearch container
-    ```
-    docker compose up elasticsearch
-    ```
-- 安裝所需的 python package
-    ```
-    pip install -r requirements.txt
-    ```
-- 執行 script
-    ```
-    python eval_retrieval.py
-    ```
+#### Retrieval Evaluation
+Evaluate and compare text (keyword) search vs. vector (semantic) search.
+- Metrics: Hit Rate (HR), Mean Reciprocal Rank (MRR)
+  ```
+  text: (HR, MRR) = (0.742, 0.606)
+  vector: (HR, MRR) = (0.762, 0.610)
+  ```
+- Start Elasticsearch container:
+  ```
+  docker compose up elasticsearch
+  ```
+- Install Python packages:
+  ```
+  pip install -r requirements.txt
+  ```
+- Run evaluation script:
+  ```
+  python eval_retrieval.py
+  ```
 
 #### Dashboard
-Access Grafana dashboard (`localhost:3000`), default login: admin/admin
-- Last 5 Conversations (Table Panel): Lists the last five conversations with timestamps, questions, and answers, sorted by time.
-- Feedback Summary (+1/-1 Pie Chart): Pie chart of user feedback, showing counts of positive and negative responses.
-- Tokens (Time Series Panel): Line chart tracking total token usage over time.
-- Search Type Distribution (Bar Chart Panel): Horizontal bar chart showing the frequency of different search types in conversations.
-- Response Time (Time Series Panel): Time series of response times, helping to monitor performance.
+Access Grafana dashboard (`localhost:3000`), default login: admin/admin.
+- **Last 5 Conversations (Table Panel):** Lists the last five conversations with timestamps, questions, and answers.
+- **Feedback Summary (+1/-1 Pie Chart):** Displays user feedback with counts of positive and negative responses.
+- **Tokens (Time Series Panel):** Tracks total token usage over time.
+- **Search Type Distribution (Bar Chart Panel):** Shows the frequency of different search types.
+- **Response Time (Time Series Panel):** Monitors response times to assess performance.
 
 #### Notebook
-可在 colab 執行
-- ground_truth_data.ipynb
-    - 透過 gemini api 為每個 document 建立 5 個相關的問題
-    - 產出 `ground-truth-data.csv`
+Executable in Colab.
+- **ground_truth_data.ipynb:**
+  - Use Gemini API to generate five related questions for each document.
+  - Outputs `ground-truth-data.csv`.
 
 ## Todo
 - [x] Problem description (2 points)
