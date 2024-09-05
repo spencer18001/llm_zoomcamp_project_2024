@@ -17,7 +17,7 @@
 This project uses a short detective story as a knowledge base, allowing users to ask questions and get answers using RAG (Retrieval-Augmented Generation) techniques.
 
 ## Requirements
-- GitHub Codespaces
+- GitHub Codespaces: Machine type > `4-core 16GB RAM`
   - `Python 3.12.1` (optional, only needed for manual script execution)
   - `Docker 27.0.3-1`
 - Gemini API key (optional, free, for evaluation)

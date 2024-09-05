@@ -198,7 +198,7 @@ def get_value_by_key(key):
 
             if result:
                 _logger.info(f"{log_prefix}: success. key={key}")
-                return result[0]  # 返回第一列的值，即 'value'
+                return result[0]
             else:
                 _logger.warning(f"{log_prefix}: no value found. key={key}")
                 return None
