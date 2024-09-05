@@ -41,7 +41,7 @@ config = Config(
     grafana_api_key_name="grafana_api_key",
     dashboard_file_path="dashboard.json",
     ground_truth_file_path="ground-truth-data.csv",
-    llm_results_num=50,
+    llm_results_num=20,
     llm_results_prompt_file_path="llm-results-prompt.csv",
     llm_results_prompt2_file_path="llm-results-prompt2.csv"
 )

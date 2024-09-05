@@ -59,3 +59,5 @@ if __name__ == "__main__":
     df_results_prompt2 = get_llm_results(es_client, llm_client, embedding_model, samples, llm_util.build_prompt2)
     df_results_prompt2.to_csv(config.llm_results_prompt2_file_path, index=False)
     
+    # getting llm results for prompt... elapsed: 20:54
+    # getting llm results for prompt2... elapsed: 22:59
