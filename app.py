@@ -87,9 +87,9 @@ def app_main():
                 query=question
             )
             st.success("Completed!")
-            st.write(answer_data['answer'])
-            st.write(f"Response time: {answer_data['response_time']:.2f} seconds")
-            st.write(f"Total tokens: {answer_data['total_tokens']}")
+            st.write(answer_data["answer"])
+            st.write(f"Response time: {answer_data["response_time"]:.2f} seconds")
+            st.write(f"Total tokens: {answer_data["total_tokens"]}")
 
             st.session_state.conversation_id = str(uuid.uuid4())
             db_util.save_conversation(st.session_state.conversation_id, user_input, search_type, answer_data)

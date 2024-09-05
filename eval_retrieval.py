@@ -6,6 +6,9 @@ from proj_config import config
 import elastic_util
 import llm_util
 
+_logger = logging.getLogger(__name__)
+_logger.setLevel(config.logging_level)
+
 def hit_rate(relevance_total):
     cnt = 0
     for line in relevance_total:
@@ -49,8 +52,8 @@ if __name__ == "__main__":
 
     text_results = eval(es_client, embedding_model, elastic_util.query_text)
     vector_results = eval(es_client, embedding_model, elastic_util.query_knn)
-    print(f"text: (hit_rate, mrr)={text_results}")
-    print(f"vector: (hit_rate, mrr)={vector_results}")
+    _logger.info(f"text: (hit_rate, mrr)={text_results}")
+    _logger.info(f"vector: (hit_rate, mrr)={vector_results}")
     # todo_spencer
     # text: (hit_rate, mrr)=(0.7419753086419754, 0.6061522633744849)
     # vector: (hit_rate, mrr)=(0.7617283950617284, 0.6104526748971189)
