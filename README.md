@@ -98,6 +98,35 @@ Evaluate and compare text (keyword) search vs. vector (semantic) search.
   ```
   python eval_retrieval.py
   ```
+#### Rag Evaluation
+Evaluate 2 prompt, use Gemini as a judge
+  ```
+  prompt:
+  count
+  Relevance	
+  NON_RELEVANT	8
+  RELEVANT	6
+  PARTLY_RELEVANT	6
+
+  prompt2:
+  count
+  Relevance	
+  NON_RELEVANT	11
+  PARTLY_RELEVANT	5
+  RELEVANT	4
+  ```
+- Start Elasticsearch container:
+  ```
+  docker compose up elasticsearch ollama
+  ```
+- Install Python packages:
+  ```
+  pip install -r requirements.txt
+  ```
+- Run evaluation script:
+  ```
+  python eval_rag.py
+  ```
 
 #### Dashboard
 Access Grafana dashboard (`localhost:3000`), default login: admin/admin.
@@ -121,10 +150,8 @@ Executable in Colab.
 - [x] Retrieval evaluation (2 points)
     - text/vector search
     - metrics: hit_rate, mrr
-- [ ] RAG evaluation
-    - 0 points: No evaluation of RAG is provided
-    - 1 point: Only one RAG approach (e.g., one prompt) is evaluated
-    - 2 points: Multiple RAG approaches are evaluated, and the best one is used
+- [x] RAG evaluation (2 points)
+    - 2 prompts, use Gemini as a judge
 - [x] Interface (2 points)
     - UI: Streamlit
 - [x] Ingestion pipeline (2 points)
