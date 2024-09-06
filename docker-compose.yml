@@ -37,14 +37,16 @@ services:
     depends_on:
       - postgres
   
-  # streamlit:
-  #   build:
-  #     context: .
-  #     dockerfile: Dockerfile
-  #   ports:
-  #     - "${STREAMLIT_LOCAL_PORT:-8501}:8501"
-  #   depends_on:
-  #     - elasticsearch
-  #     - ollama
-  #     - postgres
+  streamlit:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    ports:
+      - "${STREAMLIT_LOCAL_PORT:-8501}:8501"
+    volumes:
+      - .:/app
+    depends_on:
+      - elasticsearch
+      - ollama
+      - postgres
   

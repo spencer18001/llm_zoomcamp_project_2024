@@ -1,15 +1,14 @@
-import logging
+import os
 from tqdm.auto import tqdm
 import semchunk
 import tiktoken
 
 from proj_config import config
-from proj_util import setup_logger
+from log_util import get_logger
 import elastic_util
 import llm_util
 
-_logger = logging.getLogger(__name__)
-setup_logger(_logger)
+_logger = get_logger(__name__)
 
 def load_text():
     log_prefix = "load_text"
@@ -76,14 +75,11 @@ def ingest():
     _logger.info(f"{log_prefix}: success.")
 
 if __name__ == "__main__":
-    import os
-    
-    # todo_spencer: python-dotenv
-    # from dotenv import load_dotenv
+    from dotenv import load_dotenv
 
-    # load_dotenv()
+    load_dotenv()
 
     elastic_util.ELASTIC_HOST = "localhost"
-    elastic_util.ELASTIC_PORT = os.getenv("ELASTIC_LOCAL_PORT", 9200)
+    elastic_util.ELASTIC_PORT = int(os.getenv("ELASTIC_LOCAL_PORT", 9200))
 
     ingest()

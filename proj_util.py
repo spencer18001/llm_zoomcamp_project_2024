@@ -1,13 +1,9 @@
-import logging, time, socket, os
-from datetime import datetime
-from zoneinfo import ZoneInfo
+import time, socket
 
 from proj_config import config
+from log_util import get_logger
 
-TZ = os.getenv("TZ", "America/Puerto_Rico")
-
-_logger = logging.getLogger(__name__)
-_logger.setLevel(config.logging_level)
+_logger = get_logger(__name__)
 
 def check_service(host, port):
     log_prefix = "check_service"
@@ -23,23 +19,8 @@ def check_service(host, port):
                 return True
             except (socket.timeout, ConnectionRefusedError):
                 attempt += 1
+                _logger.debug(f"{log_prefix}: connection failed! retrying in {config.chk_serv_delay} seconds (attempt {attempt} of {config.chk_serv_retries}). host={host}, port={port}")
                 time.sleep(config.chk_serv_delay)
 
     _logger.error(f"{log_prefix}: failed! host={host}, port={port}")
     return False
-
-class TimezoneFormatter(logging.Formatter):
-    def formatTime(self, record, datefmt=None):
-        time = datetime.fromtimestamp(record.created, tz=ZoneInfo(TZ))
-        return time.strftime(datefmt)
-
-def setup_logger(logger):
-    logger.setLevel(config.logging_level)
-
-    console_handler = logging.StreamHandler()
-    console_handler.setLevel(config.logging_level)
-
-    formatter = TimezoneFormatter(fmt='%(asctime)s | %(levelname)s | %(message)s', datefmt="%H:%M:%S %Z")
-    console_handler.setFormatter(formatter)
-
-    logger.addHandler(console_handler)

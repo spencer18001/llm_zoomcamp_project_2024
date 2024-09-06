@@ -1,15 +1,15 @@
-import logging, os, json
+import os, json
 from tqdm.auto import tqdm
 from elasticsearch import Elasticsearch
 
 from proj_config import config
+from log_util import get_logger
 from proj_util import check_service
 
 ELASTIC_HOST = "elasticsearch"
 ELASTIC_PORT = 9200
 
-_logger = logging.getLogger(__name__)
-_logger.setLevel(config.logging_level)
+_logger = get_logger(__name__)
 
 def create_client():
     log_prefix = "create_client"
@@ -19,7 +19,6 @@ def create_client():
         return None
 
     client = Elasticsearch(f"http://{ELASTIC_HOST}:{ELASTIC_PORT}")
-
     _logger.info(f"{log_prefix}: success. info={json.dumps(client.info().raw, indent=2)}")
     return client
 

@@ -1,17 +1,16 @@
-import logging, time, requests
+import requests
 
 from sentence_transformers import SentenceTransformer
 from openai import OpenAI
 
 from proj_config import config
+from log_util import get_logger
 from proj_util import check_service
 
-# todo_spencer: 外部測試用
 OLLAMA_HOST = "ollama"
 OLLAMA_PORT = 11434
 
-_logger = logging.getLogger(__name__)
-_logger.setLevel(config.logging_level)
+_logger = get_logger(__name__)
 
 def create_embedding_model():
     log_prefix = "create_embedding_model"
@@ -73,3 +72,30 @@ CONTEXT:
 
     prompt = prompt_template.format(question=query, context=context).strip()
     return prompt
+
+def llm(llm_client, prompt):
+    start_time = time.time()
+    response = llm_client.chat.completions.create(
+        model=config.llm_model_name,
+        messages=[{"role": "user", "content": prompt}]
+    )
+    end_time = time.time()
+    response_time = end_time - start_time
+    tokens = {
+        "prompt_tokens": response.usage.prompt_tokens,
+        "completion_tokens": response.usage.completion_tokens,
+        "total_tokens": response.usage.total_tokens
+    }
+    return response.choices[0].message.content, tokens, response_time
+
+def rag(search_func, llm_func, build_prompt_func, query):
+    search_results = search_func(query)
+    prompt = build_prompt_func(query, search_results)
+    answer, tokens, response_time = llm_func(prompt)
+    return {
+        "answer": answer,
+        "response_time": response_time,
+        "prompt_tokens": tokens["prompt_tokens"],
+        "completion_tokens": tokens["completion_tokens"],
+        "total_tokens": tokens["total_tokens"]
+    }

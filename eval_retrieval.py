@@ -1,13 +1,14 @@
-import logging
+import os
+
 from tqdm.auto import tqdm
 import pandas as pd
 
 from proj_config import config
+from log_util import get_logger
 import elastic_util
 import llm_util
 
-_logger = logging.getLogger(__name__)
-_logger.setLevel(config.logging_level)
+_logger = get_logger(__name__)
 
 def hit_rate(relevance_total):
     cnt = 0
@@ -34,15 +35,12 @@ def eval(es_client, embedding_model, search_func):
     return hit_rate(relevance_total), mrr(relevance_total)
 
 if __name__ == "__main__":
-    import os
-    
-    # todo_spencer: python-dotenv
-    # from dotenv import load_dotenv
+    from dotenv import load_dotenv
 
-    # load_dotenv()
+    load_dotenv()
 
     elastic_util.ELASTIC_HOST = "localhost"
-    elastic_util.ELASTIC_PORT = os.getenv("ELASTIC_LOCAL_PORT", 9200)
+    elastic_util.ELASTIC_PORT = int(os.getenv("ELASTIC_LOCAL_PORT", 9200))
 
     df_ground_truth = pd.read_csv(config.ground_truth_file_path)
     ground_truth = df_ground_truth.to_dict(orient='records')
@@ -54,6 +52,7 @@ if __name__ == "__main__":
     vector_results = eval(es_client, embedding_model, elastic_util.query_knn)
     _logger.info(f"text: (hit_rate, mrr)={text_results}")
     _logger.info(f"vector: (hit_rate, mrr)={vector_results}")
-    # todo_spencer
+    
+    # output:
     # text: (hit_rate, mrr)=(0.7419753086419754, 0.6061522633744849)
     # vector: (hit_rate, mrr)=(0.7617283950617284, 0.6104526748971189)

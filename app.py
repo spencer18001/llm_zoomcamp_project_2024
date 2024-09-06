@@ -1,18 +1,16 @@
-import logging, time, uuid
-import functools
+import time, uuid, functools
 
-from tqdm.auto import tqdm
 import streamlit as st
 
 from proj_config import config
+from log_util import get_logger
 from ingest import ingest
 import elastic_util
 import llm_util
 import db_util
 import grafana_util
 
-_logger = logging.getLogger(__name__)
-_logger.setLevel(config.logging_level)
+_logger = get_logger(__name__)
 
 def init():
     st.write("🔍 **Checking if Elasticsearch index exists...**")
@@ -43,8 +41,13 @@ def init():
 
 def app_main():
     st.title(config.proj_name)
-    
+
     if "initialized" not in st.session_state:
+        st.session_state.initialized = False
+    if "conversation_id" not in st.session_state:
+        st.session_state.conversation_id = None
+    
+    if not st.session_state.initialized:
         with st.spinner('Initializing...'):
             st.session_state.es_client = elastic_util.create_client()
             st.session_state.llm_client = llm_util.create_client()
@@ -61,15 +64,12 @@ def app_main():
         embedding_model = st.session_state.embedding_model
         llm_client = st.session_state.llm_client
 
-    if "conversation_id" not in st.session_state:
-        st.session_state.conversation_id = None
-
     search_type = st.radio(
         "Select search type:",
         ["knn", "hybrid", "hybrid_rrf"]
     )
 
-    user_input = st.text_input("Enter your question:", key="user_input")
+    user_input = st.text_input("Enter your question: (e.g., \"What were the circumstances that led to the death of Julia Stoner?\")", key="user_input")
     if st.button("Ask"):
         with st.spinner('Processing...'):
             if search_type == "hybrid":
@@ -86,32 +86,25 @@ def app_main():
                 build_prompt_func=llm_util.build_prompt,
                 query=question
             )
-            st.success("Completed!")
             st.write(answer_data["answer"])
-            st.write(f"Response time: {answer_data["response_time"]:.2f} seconds")
-            st.write(f"Total tokens: {answer_data["total_tokens"]}")
+            st.write(f"Response time: {answer_data['response_time']:.2f} seconds")
+            st.write(f"Total tokens: {answer_data['total_tokens']}")
 
             st.session_state.conversation_id = str(uuid.uuid4())
             db_util.save_conversation(st.session_state.conversation_id, user_input, search_type, answer_data)
     
+    def reset():
+        st.session_state.conversation_id = None
+        st.session_state.user_input = ""
+
     if st.session_state.conversation_id:
         col1, col2 = st.columns(2)
         with col1:
-            if st.button("+1", on_click=lambda: setattr(st.session_state, 'user_input', '')):
+            if st.button("+1", on_click=reset):
                 db_util.save_feedback(st.session_state.conversation_id, 1)
-                st.session_state.conversation_id = None
-                st.rerun()
         with col2:
-            if st.button("-1", on_click=lambda: setattr(st.session_state, 'user_input', '')):
+            if st.button("-1", on_click=reset):
                 db_util.save_feedback(st.session_state.conversation_id, -1)
-                st.session_state.conversation_id = None
-                st.rerun()
 
 if __name__ == "__main__":
-    # todo_spencer
-    elastic_util.ELASTIC_HOST = "localhost"
-    llm_util.OLLAMA_HOST = "localhost"
-    db_util.POSTGRES_HOST = "localhost"
-    grafana_util.GRAFANA_HOST = "localhost"
-
     app_main()

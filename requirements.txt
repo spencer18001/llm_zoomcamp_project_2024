@@ -1,11 +1,10 @@
-streamlit
-
-semchunk
-tiktoken
+tqdm==4.66.5
+pandas==2.2.2
+semchunk==2.2.0
+tiktoken==0.7.0
 sentence-transformers==2.7.0
 elasticsearch==8.14.0
 openai==1.35.7
 psycopg2-binary==2.9.9
-
-# todo_spencer: tqdm
-# todo_spencer: dev 的 requirement
+streamlit==1.38.0
+python-dotenv==1.0.1

@@ -1,9 +1,10 @@
-import logging, os
+import os
 from datetime import datetime
 from zoneinfo import ZoneInfo
 import psycopg2
 
 from proj_config import config
+from log_util import get_logger
 from proj_util import check_service
 
 TZ = os.getenv("TZ", "America/Puerto_Rico")
@@ -14,10 +15,8 @@ POSTGRES_DB = os.getenv("POSTGRES_DB", "detective_assistant")
 POSTGRES_USER = os.getenv("POSTGRES_USER", "admin")
 POSTGRES_PASSWORD = os.getenv("POSTGRES_PASSWORD", "admin")
 
-_logger = logging.getLogger(__name__)
-_logger.setLevel(config.logging_level)
+_logger = get_logger(__name__)
 
-# todo_spencer: db time zone?
 _tz = ZoneInfo(TZ)
 
 def create_connection():

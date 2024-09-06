@@ -1,22 +1,16 @@
-import logging, os, json, requests
+import os, json, requests
 
 from proj_config import config
+from log_util import get_logger
 from proj_util import check_service
 import db_util
-
-POSTGRES_HOST = "postgres"
-POSTGRES_PORT = 5432
-POSTGRES_DB = os.getenv("POSTGRES_DB", "detective_assistant")
-POSTGRES_USER = os.getenv("POSTGRES_USER", "admin")
-POSTGRES_PASSWORD = os.getenv("POSTGRES_PASSWORD", "admin")
 
 GRAFANA_HOST = "grafana"
 GRAFANA_PORT = 3000
 GRAFANA_USER = os.getenv("GRAFANA_ADMIN_USER", "admin")
 GRAFANA_PASSWORD = os.getenv("GRAFANA_ADMIN_PASSWORD", "admin")
 
-_logger = logging.getLogger(__name__)
-_logger.setLevel(config.logging_level)
+_logger = get_logger(__name__)
 
 def create_api_key():
     log_prefix = "create_api_key"
@@ -77,14 +71,14 @@ def create_or_update_datasource(api_key):
     datasource_payload = {
         "name": "PostgreSQL",
         "type": "postgres",
-        "url": f"{POSTGRES_HOST}:{POSTGRES_PORT}",
+        "url": f"{db_util.POSTGRES_HOST}:{db_util.POSTGRES_PORT}",
         "access": "proxy",
-        "user": POSTGRES_USER,
-        "database": POSTGRES_DB,
+        "user": db_util.POSTGRES_USER,
+        "database": db_util.POSTGRES_DB,
         "basicAuth": False,
         "isDefault": True,
         "jsonData": {"sslmode": "disable", "postgresVersion": 1300},
-        "secureJsonData": {"password": POSTGRES_PASSWORD},
+        "secureJsonData": {"password": db_util.POSTGRES_PASSWORD},
     }
     _logger.debug(f"{log_prefix}: ds_payload={json.dumps(datasource_payload, indent=2)}")
 

@@ -18,9 +18,10 @@ This project uses a short detective story as a knowledge base, allowing users to
 
 ## Requirements
 - GitHub Codespaces: Machine type > `4-core 16GB RAM`
-  - `Python 3.12.1` (optional, only needed for manual script execution)
   - `Docker 27.0.3-1`
+  - `Python 3.12.1` (optional, needed only for manual script execution)
 - Gemini API key (optional, free, for evaluation)
+- Colab account (optional, for using notebooks)
 
 ## Components
 - Dataset: [The_Adventure_of_the_Speckled_Band.txt](https://en.wikisource.org/wiki/The_Adventures_of_Sherlock_Holmes_(1892,_US)/The_Adventure_of_the_Speckled_Band)
