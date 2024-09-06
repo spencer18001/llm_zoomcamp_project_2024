@@ -42,12 +42,14 @@ This project uses a short detective story as a knowledge base, allowing users to
   - Creates Elasticsearch index (if needed)
   - Creates database tables (if needed)
   - Sets up Grafana dashboard (if needed)
+    
   ![initialize](initialize.png "initialize")
 - Once initialized, you can:
   - Select search type (`Select search type:`)
   - Ask your question (`Enter your question:`)
   - Click `Ask` to perform the RAG query (> 30s for response)
   - Provide feedback with `+1` or `-1`
+  
   ![rag](rag.png "rag")
 
 #### Dashboard
@@ -57,6 +59,7 @@ Access Grafana dashboard (`localhost:3000`), default login: admin/admin.
 - **Tokens (Time Series Panel):** Tracks total token usage over time.
 - **Search Type Distribution (Bar Chart Panel):** Shows the frequency of different search types.
 - **Response Time (Time Series Panel):** Monitors response times to assess performance.
+
 ![dashboard](dashboard.png "dashboard")
 
 #### Manual Script Execution
