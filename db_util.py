@@ -41,6 +41,7 @@ def init_db():
     conn = create_connection()
     try:
         with conn.cursor() as cur:
+            cur.execute("DROP TABLE IF EXISTS keyvalues")
             cur.execute("DROP TABLE IF EXISTS feedback")
             cur.execute("DROP TABLE IF EXISTS conversations")
 

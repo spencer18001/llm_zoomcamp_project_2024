@@ -71,7 +71,7 @@ def create_or_update_datasource(api_key):
     datasource_payload = {
         "name": "PostgreSQL",
         "type": "postgres",
-        "url": f"{db_util.POSTGRES_HOST}:{db_util.POSTGRES_PORT}",
+        "url": f"postgres:5432",
         "access": "proxy",
         "user": db_util.POSTGRES_USER,
         "database": db_util.POSTGRES_DB,

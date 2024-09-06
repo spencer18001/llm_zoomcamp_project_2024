@@ -1,4 +1,4 @@
-import requests
+import time, requests
 
 from sentence_transformers import SentenceTransformer
 from openai import OpenAI

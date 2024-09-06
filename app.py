@@ -93,18 +93,17 @@ def app_main():
             st.session_state.conversation_id = str(uuid.uuid4())
             db_util.save_conversation(st.session_state.conversation_id, user_input, search_type, answer_data)
     
-    def reset():
+    def reset(feedback):
+        db_util.save_feedback(st.session_state.conversation_id, feedback)
         st.session_state.conversation_id = None
         st.session_state.user_input = ""
 
     if st.session_state.conversation_id:
         col1, col2 = st.columns(2)
         with col1:
-            if st.button("+1", on_click=reset):
-                db_util.save_feedback(st.session_state.conversation_id, 1)
+            st.button("+1", on_click=functools.partial(reset, 1))
         with col2:
-            if st.button("-1", on_click=reset):
-                db_util.save_feedback(st.session_state.conversation_id, -1)
+            st.button("-1", on_click=functools.partial(reset, -1))
 
 if __name__ == "__main__":
     app_main()
