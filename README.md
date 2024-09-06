@@ -7,10 +7,10 @@
 - [Components](#components)
 - [Features](#features)
   - [RAG](#rag)
+  - [Dashboard](#dashboard)
   - [Manual Script Execution](#manual-script-execution)
   - [Retrieval Evaluation](#retrieval-evaluation)
-  - [Dashboard](#dashboard)
-  - [Notebook](#notebook)
+  - [Rag Evaluation](#rag-evaluation)
 - [Todo](#todo)
 
 ## Project Overview
