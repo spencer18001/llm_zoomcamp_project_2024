@@ -18,11 +18,15 @@ This project uses a short detective story as a knowledge base, allowing users to
 
 ## Requirements
 - GitHub Codespaces:
-  - Machine type: `4-core 16GB RAM`
+  - Machine type: `4-core, 16GB RAM, 32G Disk`
   - `Docker 27.0.3-1`
   - `Python 3.12.1` (optional, needed only for manual script execution)
-- Gemini API key (optional, free, for evaluation)
+- [Gemini API key](https://ai.google.dev/api?authuser=1&_gl=1*2rtky3*_ga*NzgzMzE3Mi4xNzI1MzQ2MDU2*_ga_P1DBVKWT6V*MTcyNTM0NjA1NS4xLjEuMTcyNTM0ODcwMC40MS4wLjEyODI2NzQ5NzE.&lang=python#set-up-api-key) (optional, free, for evaluation)
 - Colab account (optional, for using notebooks)
+
+**Note**: Codespaces may face memory and disk shortages. To avoid this, ensure that:
+- Only essential services are running.
+- Only necessary packages are installed.
 
 ## Components
 - Dataset: [The_Adventure_of_the_Speckled_Band.txt](https://en.wikisource.org/wiki/The_Adventures_of_Sherlock_Holmes_(1892,_US)/The_Adventure_of_the_Speckled_Band)
@@ -91,7 +95,7 @@ Optional, since the Streamlit app automates these tasks.
   - Create dashboards
   ```
   docker compose up -d postgres grafana
-  python init_granafa.py
+  python init_grafana.py
   ```
 
 #### Retrieval Evaluation
@@ -137,7 +141,7 @@ Evaluate 2 prompts, using Gemini as a relevance judge.
   ```
   pip install -r requirements.txt
   docker compose up -d elasticsearch ollama
-  python eval_rag.py
+  python llm_results.py
   ```
 - eval_rag.ipynb: <a href="https://colab.research.google.com/github/spencer18001/llm_zoomcamp_project_2024/blob/main/eval_rag.ipynb" target="_parent"><img src="https://colab.research.google.com/assets/colab-badge.svg" alt="Open In Colab"/></a>
   - Use Gemini api to evaluate the relevance of RAG results for two prompts in relation to the questions.
